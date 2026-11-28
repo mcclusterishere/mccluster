@@ -1,0 +1,42 @@
+{
+  "stage": "P1",
+  "captured_at": "2026-11-28T08:33:31.828Z",
+  "path": "/table-read.html",
+  "rows": [
+    {
+      "url": "https://matthew.mccluster.org/table-read.html",
+      "status": 404
+    },
+    {
+      "url": "https://here.mccluster.org/table-read.html",
+      "status": 301,
+      "location": "https://matthew.mccluster.org/table-read.html"
+    },
+    {
+      "url": "https://humanuprise.com/table-read.html",
+      "dns": {
+        "google": {
+          "A": "NODATA",
+          "AAAA": "NODATA"
+        },
+        "cloudflare": {
+          "A": "NODATA",
+          "AAAA": "NODATA"
+        }
+      }
+    },
+    {
+      "url": "https://www.humanuprise.com/table-read.html",
+      "dns": {
+        "google": {
+          "A": "NXDOMAIN",
+          "AAAA": "NXDOMAIN"
+        },
+        "cloudflare": {
+          "A": "NXDOMAIN",
+          "AAAA": "NXDOMAIN"
+        }
+      }
+    }
+  ]
+}

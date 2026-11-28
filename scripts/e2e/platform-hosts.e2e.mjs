@@ -64,7 +64,17 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const SCHEMA = 'mccluster-platform-hosts-crawl/v1';
 export const FIXTURE_SCHEMA = 'mccluster-platform-hosts-fixture/v1';
 export const FIXTURE = 'scripts/e2e/fixtures/platform-hosts-20261123.json';
-const ADDED_PAGE_FIXTURE = 'scripts/e2e/fixtures/platform-hosts-artist-20261124.json';
+/* production's answers for each page published after the frozen fixture, one dated live capture per page
+   (--capture-added-page): a page this tree adds is judged against its own capture, never against nothing */
+export const ADDED_PAGE_FIXTURES = [
+  'scripts/e2e/fixtures/platform-hosts-artist-20261124.json',
+  'scripts/e2e/fixtures/platform-hosts-table-read-20261128.json',
+];
+
+/* The frozen fixture plus every added page's capture, in order; each is checked by withAddedPage. */
+export function withAddedPages(frozen, site, root = ROOT) {
+  return ADDED_PAGE_FIXTURES.reduce((fx, file) => withAddedPage(fx, JSON.parse(readFileSync(join(root, file), 'utf8')), site), frozen);
+}
 const DNS_RESOLVERS = {
   google: 'https://dns.google/resolve',
   cloudflare: 'https://cloudflare-dns.com/dns-query'
@@ -934,8 +944,7 @@ async function main(argv) {
   const out = arg(argv, '--out');
   if (out) writeFileSync(out, JSON.stringify(local, null, 1) + '\n');
   const frozen = readFixture();
-  const observation = JSON.parse(readFileSync(join(ROOT, ADDED_PAGE_FIXTURE), 'utf8'));
-  const fixture = site.stage === 'P0' ? frozen : withAddedPage(frozen, observation, site);
+  const fixture = site.stage === 'P0' ? frozen : withAddedPages(frozen, site);
   const verdict = judgeLocal(local, fixture, site, await addressReader());
   for (const [host, s] of Object.entries(summarize(local))) console.log(`  ${host}: ${JSON.stringify(s.status)}`);
   for (const a of verdict.added) console.log(`added   ${a} (this tree publishes it; production does not yet)`);

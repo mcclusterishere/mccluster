@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { ROOT, localFetcher, githubPages, workerEnv, crawlPlan, crawlUrls, diffCrawls, judgeServesEverything, stageJudged, COMPARED_HEADERS, cloudflareNormalized, addressReader,
+import { ROOT, withAddedPages, ADDED_PAGE_FIXTURES, localFetcher, githubPages, workerEnv, crawlPlan, crawlUrls, diffCrawls, judgeServesEverything, stageJudged, COMPARED_HEADERS, cloudflareNormalized, addressReader,
   browserPages, hisCopy, errorText, judgePage, absentAddress, readFixture, withAddedPage, localCrawl, judgeLocal } from '../e2e/platform-hosts.e2e.mjs';
 import { siteTable, readRecord } from '../../tools/build-site-hosts.mjs';
 
@@ -260,7 +260,7 @@ test('post-P0 artist observations preserve the original baseline and enforce eac
   const path = '/artist.html';
   const observation = JSON.parse(readFileSync(join(ROOT, 'scripts/e2e/fixtures/platform-hosts-artist-20261124.json'), 'utf8'));
   const frozen = readFixture();
-  const fixture = withAddedPage(frozen, observation, SITE);
+  const fixture = withAddedPages(frozen, SITE);
   const local = await localCrawl(SITE);
   const addressOf = await addressReader(ROOT);
   const check = (input) => judgeLocal(input, fixture, SITE, addressOf);
@@ -269,6 +269,8 @@ test('post-P0 artist observations preserve the original baseline and enforce eac
   const actual = check(local);
   assert.deepEqual(actual.failures, []);
   assert.ok(actual.added.includes(SITE.profile.origin + path));
+  assert.ok(actual.added.includes(SITE.profile.origin + '/table-read.html'), 'Table Read: published here, 404 in its own dated capture');
+  assert.equal(ADDED_PAGE_FIXTURES.length, new Set(ADDED_PAGE_FIXTURES).size);
   const change = (host, patch) => {
     const url = `https://${host}${path}`;
     const rows = local.rows.map((r) => r.url === url ? { ...r, ...patch } : r);
