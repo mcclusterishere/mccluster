@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 801,
+  "candidate_count": 802,
   "capability_source_count": 107,
-  "support_only_count": 694,
+  "support_only_count": 695,
   "entries": [
     {
       "path": ".cursorrules",
@@ -593,6 +593,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Ontology graph v2 (pending, owner-gated) maps existing eu_meetings, eu_releases, eu_recordings and eu_release_tracks rows into the McCluster operational ontology as meeting, release and track objects with a release_has_track link; it reads those tables only and defines no Equity Uprise building geometry, program, access or capability."
+    },
+    {
+      "path": "core/test/helpers/production-fixtures.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Production pipeline test fixture: names the approved Floor 6 Core V2 set export as a registered render asset for the s31 shot; no spatial or program capability is added."
     },
     {
       "path": "create.html",
