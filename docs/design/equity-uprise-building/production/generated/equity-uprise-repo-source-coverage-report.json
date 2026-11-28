@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 801,
+  "candidate_count": 802,
   "capability_source_count": 107,
-  "support_only_count": 694,
-  "checks_total": 3099,
-  "checks_passed": 3099,
+  "support_only_count": 695,
+  "checks_total": 3103,
+  "checks_passed": 3103,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -228,6 +228,7 @@
     "docs/control-plane/handoff-20261123/specs/SPEC-M5.md",
     "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md",
     "docs/control-plane/registry.json",
+    "docs/creator/GET-IT-BACK-60S-PRIME-HANDOFF.md",
     "docs/design/HERE-BRAND-LIBRARY.md",
     "docs/design/HERE-CURRENT-STATE-AUDIT.md",
     "docs/design/WORLD-SIGN-IN-DOOR.md",
@@ -815,7 +816,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "801 entries"
+      "detail": "802 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -5014,6 +5015,26 @@
     },
     {
       "name": "docs/control-plane/registry.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/creator/GET-IT-BACK-60S-PRIME-HANDOFF.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/creator/GET-IT-BACK-60S-PRIME-HANDOFF.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/creator/GET-IT-BACK-60S-PRIME-HANDOFF.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/creator/GET-IT-BACK-60S-PRIME-HANDOFF.md support rationale present",
       "passed": true,
       "detail": ""
     },

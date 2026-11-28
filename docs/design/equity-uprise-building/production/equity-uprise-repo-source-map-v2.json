@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 801,
+  "candidate_count": 802,
   "capability_source_count": 107,
-  "support_only_count": 694,
+  "support_only_count": 695,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1649,6 +1649,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/creator/GET-IT-BACK-60S-PRIME-HANDOFF.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Episode production handoff that names the owner's local HQ Blender Studio folder and the Floor 6 Core v2 proof scene as inputs; it defines no geometry, program or capability and defers to REFERENCE-AUTHORITY.md."
     },
     {
       "path": "docs/design/HERE-BRAND-LIBRARY.md",
