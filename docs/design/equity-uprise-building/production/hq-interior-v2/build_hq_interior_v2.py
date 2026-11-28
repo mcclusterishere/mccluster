@@ -40,6 +40,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import eu_hq_kit as K  # noqa: E402
 import hq_interior_v2_layout as L  # noqa: E402
+import hq_interior_v2_merge as MG  # noqa: E402
 
 FT = 0.3048
 FFE = {f: (f - 1) * 13.5 for f in range(1, 8)}
@@ -291,11 +292,18 @@ FEATURE_DROP = ("FEATURE-WALL", "IDENTITY-WALL", "MEDIA-WALL", "POLICY-WALL", "C
 KEEP_EQUIP = ("FREIGHT-CONTROL", "PASS-ELEV-CALL", "OPS-PANEL")
 REPLACED_BY_CSV = ("F4-MEDIA-STORAGE-01", "F5-EVIDENCE-STORAGE-01")
 
+# the existing v3 interior layer (kept and merged, see hq_interior_v2_merge.py)
+CATALOG = json.loads((PROD / "interiors" / "furniture-catalog-v3.json").read_text())["types"]
+V3 = {f: {i["id"]: i for i in json.loads((PROD / f"floor-0{f}" / f"floor-0{f}-interior-layout-v3.json").read_text())["items"]}
+      for f in range(1, 7)}
+
 
 def classify(f, ob):
     """-> (bucket, material key or None to keep the builder material)"""
     name = ob.name.split(".")[0]
     key = name.split("::")[0]
+    if f <= 6 and (key in V3[f] or key.startswith(MG.RESTORE_PREFIXES.get(f, ("\0",)))):
+        return "existing", None
     part = name.split("::")[1].lower() if "::" in name else ""
     low = key.lower()
     cy = (ob.matrix_world.translation.y) / FT
@@ -525,6 +533,263 @@ def mesh_copy(ob, into, matkey, M):
         n.data.materials.append(M[matkey])
     into.objects.link(n)
     return n
+
+
+# ------------------------------------------------------------------ existing layer: restyle, reconcile, devices
+def _hex(h):
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def _shade(h, k):
+    return "#" + "".join(f"{max(0, min(255, round(c * k))):02X}" for c in _hex(h))
+
+
+def board_role_colours(f):
+    """v3 palette role -> board colour (sRGB hex) for floor f."""
+    p = L.PALETTE[f]
+    leather = {2: "#8C4027", 4: L.LEATHER_BROWN, 6: "#6B3F24"}.get(f, L.LEATHER_BROWN)
+    return {"upholstery": p["fabric"], "upholstery_alt": _shade(p["fabric"], 1.18), "leather": leather,
+            "wood": p["wood"], "wood_dark": _shade(p["wood"], 0.68), "rug": p["rug"], "stone": p["stone"],
+            "metal": "#2A2B2E", "metal_light": "#8E9194", "accent": p["accent"], "laminate": "#D9D3C7",
+            "white": "#E7E3DA", "screen": "#15181B", "plant": "#4D6A43", "plant_alt": "#6B8656", "paper": "#DED6C3"}
+
+
+def _role_bytes(f):
+    """rgb bytes the official builder wrote for each role on floor f (layout palette over the kit default)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("_kitpal", PROD / "interiors" / "eu_furniture_kit.py")
+    src = (PROD / "interiors" / "eu_furniture_kit.py").read_text()
+    start = src.index("DEFAULT_PALETTE = {")
+    end = src.index("}", start) + 1
+    ns = {}
+    exec(src[start:end], ns)
+    pal = dict(ns["DEFAULT_PALETTE"])
+    lay = json.loads((PROD / f"floor-0{f}" / f"floor-0{f}-interior-layout-v3.json").read_text())
+    pal.update(lay.get("palette") or {})
+    return {k: tuple(v[:3]) for k, v in pal.items()}
+
+
+_EXISTING_DATA = {}
+
+
+def existing_material(f):
+    name = f"F{f:02d}_ExistingFurniture_boardPalette"
+    m = bpy.data.materials.get(name)
+    if m:
+        return m
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    p = nt.nodes["Principled BSDF"]
+    ca = nt.nodes.new("ShaderNodeVertexColor")
+    ca.layer_name = "Color"
+    nt.links.new(ca.outputs["Color"], p.inputs["Base Color"])
+    p.inputs["Roughness"].default_value = 0.55 if f != 6 else 0.42
+    p.inputs["Sheen Weight"].default_value = 0.15
+    return m
+
+
+def existing_copy(f, ob, C):
+    """Copy one existing builder object, sharing restyled mesh data between repeated pieces."""
+    key = ob.name.split(".")[0].split("::")[0]
+    v3 = V3[f].get(key)
+    d = ob.data
+    if d.name not in _EXISTING_DATA:
+        nd = d.copy()
+        roles = _role_bytes(f)
+        target = board_role_colours(f)
+        lut = {}
+        for role, b in roles.items():
+            if role in target:
+                lut[b] = tuple(c / 255 for c in _hex(target[role])) + (1.0,)
+        if nd.color_attributes:
+            a = nd.color_attributes[0]
+            for e in a.data:
+                b = tuple(round(c * 255) for c in e.color[:3])
+                if b in lut:
+                    e.color_srgb = lut[b]
+        nd.materials.clear()
+        nd.materials.append(existing_material(f))
+        _EXISTING_DATA[d.name] = nd
+    n = ob.copy()
+    n.data = _EXISTING_DATA[d.name]
+    n.parent = None
+    n.matrix_world = ob.matrix_world.copy()
+    n.name = f"F{f:02d}_{ob.name.split('.')[0]}"
+    for k in list(n.keys()):
+        if k.startswith("eu_source"):
+            del n[k]
+    n["eu_from_builder_object"] = ob.name.split(".")[0]
+    n["eu_existing_id"] = key
+    if v3:
+        n["eu_source"] = "existing v3 interior layout (kept; restyled with the board palette)"
+        n["eu_v3_type"] = v3["type"]
+        n["eu_zone"] = v3.get("zone") or ""
+        target = C["furniture"]
+    else:
+        n["eu_source"] = "existing floor builder object (restored; dropped by the first v2 build)"
+        target = C["finish"] if "FRAME" in key else C["equipment"]
+    target.objects.link(n)
+    return n
+
+
+_KIT_BB = {}
+
+
+def kit_bb(key):
+    if key not in _KIT_BB:
+        lo, hi = [1e9] * 3, [-1e9] * 3
+        for o in KITS[key].all_objects:
+            if o.type != "MESH":
+                continue
+            for v in o.bound_box:
+                w = o.matrix_world @ Vector(v)
+                for i in range(3):
+                    lo[i], hi[i] = min(lo[i], w[i] / FT), max(hi[i], w[i] / FT)
+        _KIT_BB[key] = (lo, hi)
+    return _KIT_BB[key]
+
+
+def _hull_world(obs_mats):
+    pts, zl, zh = [], 1e9, -1e9
+    for ob, mw in obs_mats:
+        if ob.type == "MESH":
+            cos = [mw @ v.co for v in ob.data.vertices]
+        else:
+            cos = [mw @ Vector(c) for c in ob.bound_box]
+        for w in cos:
+            pts.append((w.x / FT, w.y / FT))
+            zl, zh = min(zl, w.z / FT), max(zh, w.z / FT)
+    return MG.hull(pts), zl, zh
+
+
+def placed_record(f, row, e):
+    key = e.get("eu_kit") or row["kit"]
+    if key.startswith("EXISTING:") or key == "LISTENING_ENVELOPE" or e.instance_type != "COLLECTION":
+        return None
+    obs = [(o, e.matrix_world @ o.matrix_world) for o in KITS[key].all_objects if o.type in ("MESH", "CURVE")]
+    poly, zl, zh = _hull_world(obs)
+    if len(poly) < 3:
+        return None
+    return {"name": e.name, "tag": row["tag"], "kit": key, "source": row["source"], "poly": poly,
+            "z_lo": zl - FFE[f], "z_hi": zh - FFE[f]}
+
+
+def existing_records(f, EXIST):
+    recs = []
+    for key, obs in EXIST.items():
+        v3 = V3[f].get(key)
+        poly, zl, zh = _hull_world([(o, o.matrix_world) for o in obs])
+        if v3:
+            typ, zone, rug = v3["type"], v3.get("zone"), v3["type"] == "rug"
+        else:
+            typ, zone, rug = "restored", None, False
+        recs.append({"id": key, "type": typ, "zone": zone, "poly": poly, "rug": rug,
+                     "z_lo": zl - FFE[f], "z_hi": zh - FFE[f], "origin": "v3" if v3 else "restored"})
+    return recs
+
+
+def wbb(o):
+    ws = [o.matrix_world @ Vector(v) for v in o.bound_box]
+    return [min(w[i] for w in ws) / FT for i in range(3)], [max(w[i] for w in ws) / FT for i in range(3)]
+
+
+def merge_floor(f, EXIST, placed):
+    moved = {}
+    for key, (nx, ny, why) in MG.ADJUST.get(f, {}).items():
+        it = V3[f].get(key)
+        if not it or key not in EXIST:
+            continue
+        d = Vector(((nx - it["x"]) * FT, (ny - it["y"]) * FT, 0))
+        for o in EXIST[key]:
+            o.matrix_world = Matrix.Translation(d) @ o.matrix_world
+            o["eu_moved"] = why
+        moved[key] = {"from": [it["x"], it["y"]], "to": [nx, ny], "reason": why}
+    bpy.context.view_layer.update()
+    ex = existing_records(f, EXIST)
+    pl = [r for r in (placed_record(f, row, e) for row, e in placed if e is not None) if r]
+    sup, drop = MG.reconcile(ex, pl, f)
+    for key in sup:
+        for o in EXIST[key]:
+            bpy.data.objects.remove(o)
+    by_name = {r["name"]: r for r in pl}
+    for nm in drop:
+        o = bpy.data.objects.get(nm)
+        if o:
+            bpy.data.objects.remove(o)
+    v3_ids = [r["id"] for r in ex if r["origin"] == "v3"]
+    return {
+        "v3_layout_items": len(V3[f]),
+        "v3_kept": sorted(i for i in v3_ids if i not in sup),
+        "v3_superseded": {i: sup[i] for i in sorted(sup) if i in V3[f]},
+        "restored_builder_objects": sorted(r["id"] for r in ex if r["origin"] == "restored" and r["id"] not in sup),
+        "restored_superseded": {i: sup[i] for i in sorted(sup) if i not in V3[f]},
+        "pack_rows_dropped": {by_name[n]["tag"]: drop[n] for n in sorted(drop, key=lambda n: by_name[n]["tag"])},
+        "kept_ids": sorted(r["id"] for r in ex if r["id"] not in sup),
+        "existing_moved": moved,
+    }
+
+
+_DEVICES = None
+
+
+def place_devices(f, C, merge):
+    """The existing workstation/monitor layer (98 bound devices; manufacturer exterior proxies). A device stays
+    only where the support it was bound to is kept; B1's devices are left out (B1 is kept unchanged)."""
+    global _DEVICES
+    sys.path.insert(0, str(PROD / "electronics"))
+    if _DEVICES is None:
+        from device_placement_bindings import load_bindings
+        binds = dict(load_bindings())
+        tmp = coll("_tmp_devices", SRC)
+        lc = layer_coll(tmp)
+        bpy.context.view_layer.active_layer_collection = lc
+        before = set(bpy.data.objects)
+        p = PROD / "electronics" / "generated" / "equity-uprise-workstations-v1.glb"
+        bpy.ops.import_scene.gltf(filepath=str(p))
+        new = [o for o in bpy.data.objects if o not in before]
+        fix = Matrix.Scale(FT, 4) @ ROT_FIX
+        bpy.context.view_layer.update()
+        for o in new:
+            if o.parent is None:
+                o.matrix_world = fix @ o.matrix_world
+        bpy.context.view_layer.update()
+        dmat = bpy.data.materials.get("SRC_BuilderVertexColour")
+        _DEVICES = {"binds": binds, "objs": new, "sha": sha(p), "mat": dmat}
+    binds = _DEVICES["binds"]
+    kept = set(merge["kept_ids"])
+    out = {"kept": [], "dropped": {}}
+    tag = f"F{f}-"
+    roots = {}
+    for o in _DEVICES["objs"]:
+        aid = o.name.split(".")[0].split("::")[0]
+        if aid.startswith(tag):
+            roots.setdefault(aid, []).append(o)
+    for aid, obs in sorted(roots.items()):
+        b = binds.get(aid)
+        st = b["station_id"] if b else None
+        sup_node = b["support_node"].split("::")[0] if b else None
+        ok = b and (st in kept or sup_node in kept or b["support_node"] == "floor_slab" and st in kept)
+        if not ok:
+            out["dropped"][aid] = f"support {st} is not kept in this merge (superseded or replaced by an anchor)"
+            continue
+        out["kept"].append(aid)
+        for o in obs:
+            if o.type != "MESH":
+                continue
+            n = o.copy()
+            n.parent = None
+            n.matrix_world = o.matrix_world.copy()
+            n.name = f"F{f:02d}_DEV_{o.name.split('.')[0]}"
+            n["eu_source"] = "existing device layer (equity-uprise-workstations-v1.glb; manufacturer exterior proxy)"
+            n["eu_device_id"] = aid
+            n["eu_station_id"] = st
+            n["eu_source_sha256"] = _DEVICES["sha"]
+            if not n.data.materials and n.data.color_attributes:
+                n.data.materials.append(vertex_colour_material())
+            C["equipment"].objects.link(n)
+    return out
 
 
 def box_obj(name, into, x0, y0, z0, x1, y1, z1, mat, f):
@@ -828,6 +1093,7 @@ for f in range(1, 8):
     FC["eu_floor"] = f
     M = shell_mats(f)
     counts = {}
+    EXIST = {}
     for ob in SRC_FLOOR[f][1]:
         if ob.type != "MESH":
             continue
@@ -835,12 +1101,21 @@ for f in range(1, 8):
         counts[bucket] = counts.get(bucket, 0) + 1
         if bucket == "drop":
             continue
+        if bucket == "existing":
+            n = existing_copy(f, ob, C)
+            EXIST.setdefault(n["eu_existing_id"], []).append(n)
+            continue
         mesh_copy(ob, C[bucket], mk, M)
     feature_wall(f, C, M)
     pal = L.PALETTE[f]
     placed = []
     for row in L.floor_rows(f):
-        placed.append(place(f, row, C, pal))
+        placed.append((row, place(f, row, C, pal)))
+    _names = [p.name for _, p in placed if p is not None]
+    merge = merge_floor(f, EXIST, placed) if f <= 6 else None
+    placed = [bpy.data.objects[n] for n in _names if n in bpy.data.objects]
+    if f <= 6:
+        merge["devices"] = place_devices(f, C, merge)
     if f == 6:
         f6_special(C, M)
     brand_slots(f, C)
@@ -848,6 +1123,9 @@ for f in range(1, 8):
     cameras(f, C)
     REPORT["floors"][f] = {"collection": fname, "ffe_ft": FFE[f], "builder_objects_by_bucket": counts,
                            "placed_rows": len(placed)}
+    if merge:
+        REPORT["floors"][f]["merge"] = merge
+        FC["eu_merge"] = json.dumps(merge)
 
 # ------------------------------------------------------------------ world, sun, render defaults
 world = bpy.data.worlds.new("EU_Sky")

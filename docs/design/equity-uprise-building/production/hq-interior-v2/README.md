@@ -1,12 +1,61 @@
 # Equity Uprise HQ — Interior Rebuild v2 (Floors 1–7), Blender set
 
-> Status: **editable Blender set built and machine-verified (61/61 checks); visual approval by the owner is open.**
+> Status: **editable Blender set built and machine-verified (80/80 checks), now merged with the existing furnished
+> floors (v2.1, below); visual approval by the owner is open.**
 > Schematic visualization only. **NOT FOR CONSTRUCTION.** Generated images are never geometry authority.
 
 `EU_HQ_Interiors_v2.blend` is a new, separate Blender file (Blender 4.2 LTS format; opens in 4.2 and later). It rebuilds
 the interiors of Floors 1–7 on the canonical Core V2 shell, using the seven approved GPT Image boards for furniture,
 materials, equipment, lighting and mood and the seven north-up placement overlays plus `asset-map.csv` (52 anchors) for
 placement. No existing `.blend` or `.glb` was opened for writing, and nothing in the website, Worker or database changed.
+
+## v2.1 — merged with the existing interior layer (2026-11-28)
+
+The first v2 build threw away the floors' existing furnishing and redrew it from the boards. Its shell classifier
+dropped **all 286 pieces of the v3 interior layer** (`floor-0X-interior-layout-v3.json`: catalog-sized pieces with
+stable IDs, zones and program sources, including the named staff desks), about 100 other builder objects (room
+displays, gallery and archive frames, review surfaces) and never loaded the 98-device workstation layer. That broke
+the building contract ("no destructive forgetting: apply new research to the best existing design").
+
+v2.1 keeps the existing design and applies the pack to it. `hq_interior_v2_merge.py` decides piece by piece, using
+the real mesh outlines and heights:
+
+- **R0** a whole existing zone an owner requirement replaces (only F6 `command-preparation`, see open items).
+- **R1** an approved anchor is always built at its CSV point; an existing piece it sits on is superseded. When the
+  anchor is a re-make of that piece at the same point (F2 forum, F3 exchange and Interview A, F5 policy, F6 command
+  tables), the table is replaced and **its existing seating is kept**.
+- **R2** the seats of a superseded table or desk go with it.
+- **R3** an anchor's companions (chairs, screens, lamps) give way as a group to the existing composition.
+- **R4/R5** board dressing (S-tags) and board rugs are dropped where an existing piece or rug already does the job.
+
+Everything else that exists is kept and restyled with the floor's board palette (the builder's vertex-colour roles
+are remapped: upholstery, leather, wood, rug, stone, metal...). Repeated existing pieces share mesh data. Devices
+stay where their bound support stays. Every decision, with its reason, is in `EU_HQ_Interiors_v2-build-report.json`
+(`floors.N.merge`) and on each floor collection (`eu_merge`); every kept piece and device is in the inventory CSV.
+
+| Floor | v3 pieces kept | superseded | restored builder objects | pack rows dropped | devices kept | existing pieces moved |
+| --- | --- | --- | --- | --- | --- | --- |
+| F1 | 21 / 35 | 14 | 2 | 10 | 4 / 8 | 0 |
+| F2 | 44 / 48 | 4 | 2 | 15 | 4 / 4 | 0 |
+| F3 | 43 / 49 | 6 | 4 | 26 | 8 / 8 | 2 |
+| F4 | 43 / 52 | 9 | 7 | 12 | 21 / 24 | 1 |
+| F5 | 36 / 55 | 19 | 11 | 11 | 24 / 24 | 0 |
+| F6 | 26 / 47 | 21 | 5 | 9 | 9 / 18 | 1 |
+| **Total** | **213 / 286** | **73** | **31** | **83** | **70 / 86** | **4** |
+
+Notable outcomes: F2 keeps its eight forum armchairs (the historical eight-seat composition) around the approved oval
+table instead of the board's twelve; F3 keeps its six exchange chairs; the named staff desks on every floor (Grace,
+Valeria, Chioma, Thandiwe, Sari, Nusrat, Arjun, Rafael, Aya, Priya, Maren, Oksana, Leila, Amira, Li, Marc, Helen) are
+back; the F2 cohort workshop, F3 field-ops planning, F4 interview set and brand studio, F5 carrels and reading corner
+and F6 director's office are back. Superseded pieces are mostly the tables/chairs the anchors re-make (intake, passport,
+source/publication review, strategy/briefing rooms) and the F6 preparation desks.
+
+Moved existing pieces (the walking routes now count furniture as obstacles, and these blocked a room door):
+`F3-LOUNGE-PLANT-02`, `F3-INTERVIEW-B-PLANT-01`, `F4-RECORDING-SCREEN-01`, `F6-SALON-PLANT-02`; the board's F6 salon
+round table moved north from Y21.4 to Y23 with diagonal seats for the same reason.
+
+Known limit: the v3 kit's pieces are lower in detail than the v2 kit's (e.g. the F6 executive chairs read as blocky
+in close-ups). They keep their catalog sizes and IDs; upgrading their meshes in place is the natural next pass.
 
 ## Where it was built, and how to get it onto Prime
 
@@ -43,9 +92,10 @@ blender -b <file> --python ...\hq-interior-v2\render_hq_interior_v2.py -- --outd
 | `build_hq_interior_v2.py` | deterministic builder (authority order below) |
 | `eu_hq_kit.py` | the instanced furniture/equipment kit (original procedural geometry; no marks) |
 | `hq_interior_v2_layout.py` | per-floor placement: the 52 CSV anchors plus board dressing |
+| `hq_interior_v2_merge.py` | v2.1 merge rules with the existing v3 interior layer, devices and restored objects (pure Python) |
 | `verify_hq_interior_v2.py` | fresh-process reopen and verification; writes the report and the inventory |
 | `render_hq_interior_v2.py` | review renders (top-down, eye level, board-matching, before/after) |
-| `hq-interior-v2-verification.json` | 61/61 checks with details (stacking, routes, collisions, deviations) |
+| `hq-interior-v2-verification.json` | 80/80 checks with details (stacking, routes, collisions, merge, deviations) |
 | `hq-interior-v2-asset-inventory.csv` | every placed asset keyed to the overlay tags, with source and inferred/anchored status |
 | `EU_HQ_Interiors_v2-build-report.json` | source GLB hashes, pack hashes, per-floor counts |
 | `source/` | hash-checked copies of `asset-map.csv`, `place-asset-proxies.py` and the seven `F0X-Asset-Placement.svg` |
@@ -120,7 +170,7 @@ steel throughout. To restyle one object, edit its custom properties; to restyle 
   routing beacon (7.1), overlook bench, bollards and planters (7.2, 7.3), weather console (7.4, moved, see below),
   plant (7.5 = the existing L7 mechanical unit). Signage stays destination-agnostic.
 
-## Verification (fresh-process reopen) — 61/61
+## Verification (fresh-process reopen) — 80/80
 
 From `hq-interior-v2-verification.json`:
 
@@ -138,6 +188,9 @@ From `hq-interior-v2-verification.json`:
   are reachable; the anchors inside enclosed rooms (1.5, 3.7, 3.8, 4.4, 4.5, 4.8, 5.4, 5.5, 5.8, 6.4, 6.5) are reached
   through their 3 ft doors, which the 6 in grid resolves as at least 30 in.
 - No furniture or equipment intersects a wall, core, shaft, stair or glazing (exact boxes; plants measured at the pot).
+- v2.1: the walking routes count the kept existing furniture as obstacles. Every v3 piece on F1–F6 is either present
+  or superseded with a recorded reason (213 + 73 = 286). Every kept device stands on a kept support. No kept existing
+  piece overlaps a pack piece (convex hulls of the real vertices, same height band, > 0.25 sq ft).
 - One Halo Globe, centre (55, 12) at 8.25 ft AFF, radius 2.25 ft, nothing beneath it; one PRIM2 screen; both interaction
   anchors exist and point at their objects; the McCluster office slot is on F6 only; no logo or wordmark geometry.
 
@@ -184,6 +237,14 @@ separate canonical layer); the F2 board's oval check-in desk (the plan's kiosk z
 the F6 screen (no wordmark is modelled; the screen is the interface).
 
 ## Open items
+
+- **F6 preparation desks (v2.1):** Matthew's suite (owner brief) occupies the existing `command-preparation` zone, so
+  `F6-BRIEFING-PREP-DESK-01..03` and their devices (`F6-USER-WS-04..06` with monitors) are out of this set. They need
+  a new home on F6, or the suite moves; owner decision.
+- **Duplicate people (v2.1):** the CSV names Grace (1.2), Valeria (1.3), Chioma (2.5), Thandiwe (2.7), Sari (2.6),
+  Nusrat (3.3), Arjun (3.5), Rafael (3.6), Aya (3.4), Oksana (5.4), Leila (5.5), Amira (5.6), Li (6.4), Marc (6.5) and
+  Helen (6.6), plus Priya (4.6) and Maren (4.5), at the anchored stations, while the kept workplace layer still has their own named desks. Both are in the
+  set; the owner should say whether the anchors replace those desks or are second work points.
 
 - Owner visual approval on Prime, and a pass at the higher sample counts Prime's GPU allows.
 - McCluster office artwork for `F06_BRAND_SLOT_mccluster-office` (no supplied variant exists in `brand-manifest.json`).

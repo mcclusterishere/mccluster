@@ -285,10 +285,11 @@ def floor_rows(f):
               dict(tag="S6.7", kit="RUG", x=9.0, y=31.0, sx=13.0, sy=10.5, rot=0, source="board", note="salon rug"),
               dict(tag="S6.8", kit="BOOKCASE", x=2.85, y=26.4, rot=90, source="board", note="salon library"),
               dict(tag="S6.9", kit="BOOKCASE", x=2.85, y=21.6, rot=90, source="board", note="salon library"),
-              dict(tag="S6.10", kit="ROUND_TABLE_4", x=11.0, y=21.4, rot=0, source="board", note="salon round table"),
+              dict(tag="S6.10", kit="ROUND_TABLE_4", x=11.0, y=23.0, rot=0, source="board",
+                   note="salon round table (moved north from Y21.4 and seats set on the diagonals: a seat stood in front of the strategy-room door)"),
               dict(tag="S6.11", kit="LAMP_FLOOR", x=15.8, y=30.2, rot=0, source="board", note="salon floor lamp"),
               dict(tag="S6.12", kit="PLANT_TREE", x=16.4, y=36.4, rot=0, source="board", note="salon tree")]
-        _ring(R, "S6.10", 11.0, 21.4, 2.75, 2.75, 4, kit="CHAIR_SIDE", start=0)
+        _ring(R, "S6.10", 11.0, 23.0, 2.75, 2.75, 4, kit="CHAIR_SIDE", start=45)
         for tag, x, cz in (("6.4", 8, None), ("6.5", 24, 21.0)):
             _desk(R, tag, "WORKPOINT_5x2.5", x, 10, 0, screen="MONITOR", lamp=True, source="csv", w=5, d=2.5)
             _line(R, tag + "/guest", [x - 1.25, x + 1.25], 12.7, 0)

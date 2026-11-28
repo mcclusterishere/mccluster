@@ -361,7 +361,7 @@ MDF rack 01 in B1 (42U EIA-310, mirrors `B1-TELECOM-RACKS-01-I001`) and a generi
 
 ## v3 interiors, brand slots and model consistency (2026-11-03)
 
-- `production/hq-interior-v2/` — HQ Interior Rebuild v2: editable Blender set `EU_HQ_Interiors_v2.blend` for Floors 1–7 built from the approved HQ Interior Concept v2 pack on the Core V2 shell; builder, instanced kit, layout, fresh-process verifier (61/61), asset inventory keyed to the overlay tags, review renders. Read its `README.md` (inferred placements and deviations listed there).
+- `production/hq-interior-v2/` — HQ Interior Rebuild v2: editable Blender set `EU_HQ_Interiors_v2.blend` for Floors 1–7 built from the approved HQ Interior Concept v2 pack on the Core V2 shell; builder, instanced kit, layout, v2.1 merge with the existing v3 interior layer and device layer (`hq_interior_v2_merge.py`), fresh-process verifier (80/80), asset inventory keyed to the overlay tags, review renders. Read its `README.md` (inferred placements and deviations listed there).
 - `production/interiors/furniture-catalog-v3.json` — shared furniture types with real dimensions.
 - `production/interiors/eu_furniture_kit.py` — catalog → instanced meshes for every floor builder.
 - `production/interiors/audit_interior_consistency.py` — model-consistency audit (CI + deploy); report `production/generated/equity-uprise-interior-consistency-report.json`.

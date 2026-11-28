@@ -22,6 +22,9 @@ import bpy
 import numpy as np
 from mathutils import Vector
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import hq_interior_v2_merge as MG  # noqa: E402
+
 FT = 0.3048
 a = sys.argv[sys.argv.index("--") + 1:]
 opt = {a[i][2:]: a[i + 1] for i in range(0, len(a), 2)}
@@ -335,7 +338,9 @@ for f in range(1, 8):
     walls = np.zeros((N, N), bool)
     furn = np.zeros((N, N), bool)
     for o in members(FLOORS[f]):
-        if o.type == "MESH" and (o.users_collection[0].name.endswith(("_Shell", "_LifeSafety_kept", "_Equipment", "_ArchFinishes"))):
+        if o.type == "MESH" and o.get("eu_v3_type") == "rug":
+            continue
+        if o.type == "MESH" and (o.users_collection[0].name.endswith(("_Shell", "_LifeSafety_kept", "_Equipment", "_ArchFinishes", "_Furniture"))):
             nm = o.get("eu_from_builder_object", o.name)
             if any(k in nm for k in DOOR_PASS) or "floor_slab" in nm or "ROOF-DECK" in nm or "stair_a" == nm[:7] and f == 7:
                 continue
@@ -426,6 +431,94 @@ for f in range(1, 8):
                 hits.append((o.name, nm, round(ox * oy, 2)))
     COLL[f] = hits
     check(f"F{f:02d} no furniture/equipment intersecting walls, cores or stairs", not hits, hits[:8])
+
+# ------------------------------------------------------------- merge with the existing interior layer
+PRODV = REPO / "docs/design/equity-uprise-building/production"
+MERGE = {}
+tot_layout = tot_kept = tot_sup = 0
+for f in range(1, 7):
+    m = json.loads(FLOORS[f].get("eu_merge", "{}") or "{}")
+    lay = [i["id"] for i in json.loads((PRODV / f"floor-0{f}" / f"floor-0{f}-interior-layout-v3.json").read_text())["items"]]
+    present = {}
+    for o in members(FLOORS[f]):
+        if o.get("eu_existing_id"):
+            present.setdefault(o["eu_existing_id"], []).append(o)
+    missing = [i for i in lay if i not in present and i not in m.get("v3_superseded", {})]
+    unexplained = [i for i, why in m.get("v3_superseded", {}).items() if not why or i in present]
+    tot_layout += len(lay)
+    tot_kept += sum(1 for i in lay if i in present)
+    tot_sup += len(m.get("v3_superseded", {}))
+    check(f"F{f:02d} existing v3 interior layer: every piece kept or superseded with a recorded reason",
+          m and not missing and not unexplained,
+          {"layout": len(lay), "kept": sum(1 for i in lay if i in present), "superseded": len(m.get("v3_superseded", {})),
+           "missing": missing, "unexplained": unexplained})
+    # devices: each kept device stands on a support that is still in the scene
+    devs = {}
+    for o in members(FLOORS[f]):
+        if o.get("eu_device_id"):
+            devs.setdefault(o["eu_device_id"], o.get("eu_station_id"))
+    orphan = [d for d, st in devs.items() if st not in present and not any(
+        x.get("eu_from_builder_object", "").split("::")[0] == st for x in members(FLOORS[f]))]
+    check(f"F{f:02d} existing device layer: every kept device stands on a kept support", not orphan,
+          {"devices": len(devs), "dropped": len(m.get("devices", {}).get("dropped", {})), "orphans": orphan})
+    # independent overlap test: convex hulls of the real vertices, existing pieces vs pack pieces, same height band
+    def hull_of(obs_mats):
+        pts, zl, zh = [], 1e9, -1e9
+        for ob, mw in obs_mats:
+            if ob.type != "MESH" or not hasattr(ob.data, "vertices"):
+                vs = np.array([tuple(c) for c in ob.bound_box])
+            else:
+                vs = np.array([v.co for v in ob.data.vertices])
+            if not len(vs):
+                continue
+            M4 = np.array(mw)
+            w = (np.c_[vs, np.ones(len(vs))] @ M4.T)[:, :3] / FT
+            pts.extend(map(tuple, w[:, :2]))
+            zl, zh = min(zl, w[:, 2].min()), max(zh, w[:, 2].max())
+        return MG.hull(pts), zl - FFE[f], zh - FFE[f]
+    EX = {}
+    for k, obs in present.items():
+        if any(o.get("eu_v3_type") == "rug" for o in obs) or "-POWER-" in k:
+            continue
+        EX[k] = hull_of([(o, o.matrix_world) for o in obs if o.type == "MESH"])
+    PK = {}
+    for di in dg.object_instances:
+        if not di.is_instance or di.object.type != "MESH" or not di.parent:
+            continue
+        par = di.parent.original
+        if par.name not in {o.name for o in members(FLOORS[f])} or par.get("eu_kit") in MG.NO_COLLIDE_KITS:
+            continue
+        PK.setdefault(par.name, []).append((di.object.original, di.matrix_world.copy()))
+    PKH = {k: hull_of(v) for k, v in PK.items()}
+    clashes = []
+    for a_, (ha, za, zb) in EX.items():
+        if za > 6.5 or len(ha) < 3:
+            continue
+        for b_, (hb, zc, zd) in PKH.items():
+            if zc > 6.5 or len(hb) < 3 or min(zb, zd) - max(za, zc) < 0.05:
+                continue
+            ov = MG.overlap(ha, hb)
+            if ov > 0.25:
+                clashes.append((a_, b_, round(ov, 2)))
+    MERGE[f] = {"kept": len(present), "clashes": clashes}
+    check(f"F{f:02d} no kept existing piece overlaps a pack piece (vertex hulls, same height band, > 0.25 sq ft)",
+          not clashes, clashes[:10])
+    for k, obs in sorted(present.items()):
+        o = obs[0]
+        lo = [min(wbbox(x)[0][i] for x in obs) for i in range(3)]
+        hi = [max(wbbox(x)[1][i] for x in obs) for i in range(3)]
+        INV.append({"floor": f, "overlay_tag": "", "asset_id": k, "blender_object": o.name,
+                    "kit_master": o.get("eu_v3_type", "existing builder object"),
+                    "x_ft": round((lo[0] + hi[0]) / 2, 2), "y_ft": round((lo[1] + hi[1]) / 2, 2),
+                    "envelope_ft": f"{hi[0] - lo[0]:.1f} x {hi[1] - lo[1]:.1f} x {hi[2] - lo[2]:.1f}", "material_hint": "board palette",
+                    "source": o.get("eu_source", "existing"), "note": o.get("eu_zone", "")})
+    for d, st in sorted(devs.items()):
+        INV.append({"floor": f, "overlay_tag": "", "asset_id": d, "blender_object": f"F{f:02d}_DEV_{d}",
+                    "kit_master": "manufacturer exterior proxy", "x_ft": "", "y_ft": "", "envelope_ft": "",
+                    "material_hint": "", "source": "existing device layer (kept)", "note": f"support {st}"})
+check("existing interior layer restored: v3 pieces kept + superseded account for all of them",
+      tot_kept + tot_sup == tot_layout, {"layout": tot_layout, "kept": tot_kept, "superseded": tot_sup})
+R["merge"] = MERGE
 
 R["stack"] = {f: {k: v[1] for k, v in s.items()} for f, s in stack.items()}
 R["routes"] = ROUTES
