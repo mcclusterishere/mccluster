@@ -75,5 +75,5 @@ On Prime, rehearsing offline: `node tools/table-read/relay.mjs`, then open the p
 1. Set the Worker secret `TABLE_READ_PASS_KEY` (32+ random characters).
 2. Choose a TURN relay for phones on cellular or strict NATs. STUN alone (`stun.cloudflare.com`) will fail some of them.
 3. Deploy to review with the flag on. Run the two-phone read on two real phones (iOS Safari and Android Chrome), plus a desktop host. Cover headphones, denied permission, a backgrounded tab and a dropped network.
-4. After the page is live, capture its host observation (`PLATFORM_HOSTS_LIVE=1 node scripts/e2e/platform-hosts.e2e.mjs --capture-added-page /table-read.html --out scripts/e2e/fixtures/platform-hosts-table-read-<date>.json`) and wire it into `scripts/test/platform-hosts-crawl.test.mjs`. Until then that suite's added-page check fails, by design.
+4. Done 2026-11-28: the host crawl judges `/table-read.html` against its own dated production capture (`scripts/e2e/fixtures/platform-hosts-table-read-20261128.json`, listed in `ADDED_PAGE_FIXTURES`). Production answered 404 on Matthew's host, which is how a page this tree adds before it is published is meant to be recorded.
 5. Disclose Table Read recording (device-local, peer-to-peer transfer, no server copy) in the privacy policy before switching it on for anyone but the owner.
