@@ -26,7 +26,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 484,
+  "tracked_count": 486,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -444,8 +444,10 @@
       "docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py",
       "docs/design/equity-uprise-building/production/hq-interior-v2/EU_HQ_Interiors_v2-build-report.json",
       "docs/design/equity-uprise-building/production/hq-interior-v2/EU_HQ_Interiors_v2.blend",
+      "docs/design/equity-uprise-building/production/hq-interior-v2/HANDOFF.md",
       "docs/design/equity-uprise-building/production/hq-interior-v2/README.md",
       "docs/design/equity-uprise-building/production/hq-interior-v2/build_hq_interior_v2.py",
+      "docs/design/equity-uprise-building/production/hq-interior-v2/compose_review_sheets.py",
       "docs/design/equity-uprise-building/production/hq-interior-v2/eu_hq_kit.py",
       "docs/design/equity-uprise-building/production/hq-interior-v2/hq-interior-v2-asset-inventory.csv",
       "docs/design/equity-uprise-building/production/hq-interior-v2/hq-interior-v2-verification.json",
