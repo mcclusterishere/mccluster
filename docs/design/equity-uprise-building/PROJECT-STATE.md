@@ -2,6 +2,12 @@
 
 > Update this file whenever completion, maturity, visual direction, or next work changes.
 
+## Owner-reviewed HQ interior concepts — 2026-11-28
+
+Matthew reviewed and requested preserving seven GPT Image interior reference boards for F1–F7. The [interior concept pack](references/hq-interior-concept-v2/README.md) contains the exact PNGs, seven editable placement overlays, 52 proposed furnishing/equipment anchors, and a Blender wire-proxy placement script. The PNGs are a visual direction only; retain the existing Core V2 shell, vertical circulation, site/discharge authority and plan dimensions. Use the v2 plan for the suspended F6 Halo; the image pedestal is not approved geometry. F7 remains an open roof.
+
+Next: rebuild the interiors in a duplicate of the assembled editable Blender source. Reconcile history, current floor plans, inventory and existing furnishings before replacing anything. This reference upload does not finish, replace or redeploy any 3D scene.
+
 ## Production release evidence source coverage — 2026-11-20
 
 Classified the November 20 production schema snapshot as documentation support,
