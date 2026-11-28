@@ -115,3 +115,27 @@ test('response byte bounds reject declared and chunked oversized bodies',async()
   assert.equal(canceled,true);
   assert.equal(await readBoundedText(new Response('{"ok":true}'),20),'{"ok":true}');
 });
+
+test('owner cancel on a heartbeat stops the executor and reports a final, non-retried failure', async () => {
+  const h = harness(); const calls = []; let signal; let progressAsked = 0;
+  const run = runLease({ lease: claim(), nodeId: 'node-A', sentAt: h.clock(), ...h.options,
+    progress: async () => { progressAsked += 1; return { step: 'render', frames_done: 12, frames_total: 120, junk: 'x'.repeat(5000) }; },
+    request: async (path, body) => { calls.push({ path, body }); h.advance(10);
+      if (path.endsWith('/start')) return { ok: true, result: receipt(10) };
+      if (path.endsWith('/heartbeat')) return { ok: true, result: receipt(30_020), cancel_requested: true };
+      return { ok: true, result: true }; },
+    execute: async (_, s) => { signal = s; return new Promise((_resolve, reject) => s.addEventListener('abort', () => reject(s.reason), { once: true })); } });
+  await flush(); h.advance(30_000); h.fire(30_000); await flush(); await flush();
+  const outcome = await run;
+  assert.equal(signal.aborted, true);
+  assert.equal(outcome.status, 'canceled');
+  assert.equal(progressAsked, 1);
+  const beat = calls.find((c) => c.path.endsWith('/heartbeat'));
+  assert.equal(beat.body.progress.state, 'running');
+  assert.equal(beat.body.progress.frames_done, 12);
+  assert.ok(JSON.stringify(beat.body.progress).length < 4096, 'progress is bounded');
+  const fail = calls.find((c) => c.path.endsWith('/fail'));
+  assert.equal(fail.body.retry, false);
+  assert.match(fail.body.error, /^CANCELED/);
+  assert.equal(calls.some((c) => c.path.endsWith('/complete')), false);
+});

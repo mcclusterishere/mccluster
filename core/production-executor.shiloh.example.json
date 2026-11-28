@@ -1,0 +1,23 @@
+{
+  "_comment": "Example for Shiloh. facetrack_script is Ultimate Studio's reaction_worker.py where it is installed (it is not copied into this repo); whisper_script may be left out to use tools/production/shiloh/transcript.py.",
+  "node_label": "shiloh",
+  "projects": {
+    "get-it-back": "<absolute path to the get-it-back project on Shiloh>"
+  },
+  "capabilities": [
+    "production.facetrack.mediapipe",
+    "production.transcript.whisper"
+  ],
+  "tools": {
+    "python": "<python.exe with mediapipe and faster-whisper>",
+    "ffmpeg": "<path to ffmpeg>",
+    "ffprobe": "<path to ffprobe>",
+    "face_model": "<path to face_landmarker.task>",
+    "facetrack_script": "<path to desktop/windows/studio/production/ultimate/reaction_worker.py>",
+    "whisper_models": "<optional local Faster Whisper models dir>"
+  },
+  "timeouts": {
+    "facetrack": 1800000,
+    "transcript": 1800000
+  }
+}

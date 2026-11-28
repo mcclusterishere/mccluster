@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 801,
+  "candidate_count": 802,
   "capability_source_count": 107,
-  "support_only_count": 694,
-  "checks_total": 3099,
-  "checks_passed": 3099,
+  "support_only_count": 695,
+  "checks_total": 3103,
+  "checks_passed": 3103,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -84,6 +84,7 @@
     "core/data/fictional-city/district.v1.json",
     "core/data/fictional-city/places.v1.json",
     "core/ontology/graph-v2.json",
+    "core/test/helpers/production-fixtures.mjs",
     "create.html",
     "css/daylight.css",
     "css/equity-uprise-app.css",
@@ -815,7 +816,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "801 entries"
+      "detail": "802 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2234,6 +2235,26 @@
     },
     {
       "name": "core/ontology/graph-v2.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/test/helpers/production-fixtures.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/test/helpers/production-fixtures.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "core/test/helpers/production-fixtures.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "core/test/helpers/production-fixtures.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

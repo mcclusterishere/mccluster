@@ -103,7 +103,23 @@ const REMOTE_CAPABILITIES = new Set([
   'ingest.record.write',
   'ingest.run.finish',
   'entity.resolve',
-  'facts.claim'
+  'facts.claim',
+  // The production job service (docs/control-plane/PRODUCTION-PIPELINE.md).
+  // Named actions only: none takes a command, script, machine path or
+  // code. Reads (risk: read) and the four writes (render, cancel,
+  // face-track, transcript submit; risk: write, approval: none) queue
+  // work only for owned workers over the signed compute protocol, and
+  // the service authorizes the stamped actor against the project and
+  // its actors' consent. All run on the house organization only.
+  'production.project.get',
+  'production.asset.lookup',
+  'production.shot.validate',
+  'production.render.submit',
+  'production.job.get',
+  'production.job.cancel',
+  'production.artifact.get',
+  'production.facetrack.submit',
+  'production.transcript.submit'
 ]);
 
 // Tools whose org_id is never the caller's to choose: the edge overwrites it
@@ -117,7 +133,16 @@ const HOUSE_ORG_ONLY = new Set([
   'workstream.list',
   'dispatch.turn',
   'dispatch.get',
-  'dispatch.execute'
+  'dispatch.execute',
+  'production.project.get',
+  'production.asset.lookup',
+  'production.shot.validate',
+  'production.render.submit',
+  'production.job.get',
+  'production.job.cancel',
+  'production.artifact.get',
+  'production.facetrack.submit',
+  'production.transcript.submit'
 ]);
 
 function serviceHeaders(env) {

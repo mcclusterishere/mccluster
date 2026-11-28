@@ -50,6 +50,14 @@ const SAMPLE_ARGS = {
   'job.prim3_agent_news': { target_id: 'prim3-desk' },
   'job.character_post': { characters: ['ava'] },
   'job.actor_news_comment': { target_id: 'actor-1' },
+  'production.project.get': { project_id: 'get-it-back' },
+  'production.asset.lookup': { project_id: 'get-it-back' },
+  'production.shot.validate': { manifest: { project_id: 'get-it-back', shot_id: 's31' } },
+  'production.render.submit': { retake_of: UUID_X },
+  'production.job.get': { job_id: UUID_X },
+  'production.job.cancel': { job_id: UUID_X },
+  'production.facetrack.submit': { manifest: { project_id: 'get-it-back' } },
+  'production.transcript.submit': { manifest: { project_id: 'get-it-back' } },
 };
 const SAMPLE_MESSAGE = `please handle this ${UUID_X} at https://meet.google.com/abc-defg-hij and say "hello everyone"`;
 
@@ -71,11 +79,12 @@ test('every catalog capability is routed or explicitly excluded, never both', ()
   // gets no route until someone writes its hint (summary, argument mapping)
   // in routes.mjs or excludes it.
   for (const route of DISPATCH_ROUTES.filter((r) => r.via === 'capability')) assert.ok(route.hint?.summary, `${route.capability} has an explicit routing hint`);
-  // The headline numbers: the 48 OVH capabilities (catalog minus the 3
-  // dispatch.* tools themselves), 46 routed, browser.act and site.edit excluded.
+  // The headline numbers: the 57 OVH capabilities (catalog minus the 3
+  // dispatch.* tools themselves; 9 of them the production job service),
+  // 55 routed, browser.act and site.edit excluded.
   const ovh = ids.filter((id) => !id.startsWith('dispatch.'));
-  assert.equal(ovh.length, 48);
-  assert.equal(ovh.filter((id) => routed.has(id)).length, 46);
+  assert.equal(ovh.length, 57);
+  assert.equal(ovh.filter((id) => routed.has(id)).length, 55);
   assert.deepEqual(ovh.filter((id) => !routed.has(id)).sort(), ['browser.act', 'site.edit']);
 });
 

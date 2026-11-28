@@ -312,6 +312,19 @@ async function executeHttp(executor, task, signal) {
   } finally { clearTimeout(timeout); signal?.removeEventListener('abort', abort); }
 }
 
+// Optional loopback progress endpoint of an executor (the production
+// executor serves one): read with a short timeout and sent with the
+// lease heartbeat. Never required, never retried.
+async function progressHttp(executor, task) {
+  if (!executor?.progress_url || !task?.input?.job_id) return null;
+  const url = assertLoopbackExecutor(executor.progress_url);
+  url.searchParams.set('job_id', String(task.input.job_id).slice(0, 64));
+  const res = await fetch(url, { method: 'GET', redirect: 'error', headers: executor.headers || {}, signal: AbortSignal.timeout(2000) });
+  if (!res.ok) return null;
+  const text = await readBoundedText(res, 16_000);
+  try { return JSON.parse(text); } catch { return null; }
+}
+
 async function executeTask(executor, task, signal) {
   if (!executor) throw permanentError(`No local executor configured for ${task.implementation || task.capability}`);
   if (executor.type === 'http') return executeHttp(executor, task, signal);
@@ -438,6 +451,7 @@ async function run() {
             lease, nodeId: identity.nodeId, sentAt, signal: shutdown.signal,
             request: (pathname, body, signal) => signedRequest(identity, pathname, body, signal),
             execute: (leasedTask, signal) => executeTask(executor, leasedTask, signal),
+            progress: executor?.progress_url ? (leasedTask) => progressHttp(executor, leasedTask) : null,
             onEvent: (event, error) => warn({ event, lease_id: leaseId, task_id: task.id, error: error.message })
           }).catch((error) => {
             warn({ event: 'lease_execution_rejected', lease_id: leaseId, task_id: task.id, error: error.message });

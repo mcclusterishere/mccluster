@@ -9,6 +9,7 @@ import { ONTOLOGY_TOOLS, callOntologyTool } from './ontology.mjs';
 import { INGESTION_TOOLS, callIngestionTool } from './ingestion.mjs';
 import { activeMeetingTools, callMeetingTool } from './meeting.mjs';
 import { WORKSTREAM_TOOLS, callWorkstreamTool } from './workstream.mjs';
+import { PRODUCTION_TOOLS, callProductionTool } from './production.mjs';
 import { submitResidentAiTurn, getResidentAiTurn } from '../resident-ai.mjs';
 import { GAME_LORE_INPUT_SCHEMA, readGameLore } from '../game-lore.mjs';
 import { DISPATCH_TOOLS, callDispatchTool, dispatchDependencies } from './dispatch.mjs';
@@ -123,7 +124,7 @@ const BASE_TOOLS = [
   }
 ];
 
-BASE_TOOLS.push(...ONTOLOGY_TOOLS, ...INGESTION_TOOLS, ...WORKSTREAM_TOOLS, ...DISPATCH_TOOLS);
+BASE_TOOLS.push(...ONTOLOGY_TOOLS, ...INGESTION_TOOLS, ...WORKSTREAM_TOOLS, ...DISPATCH_TOOLS, ...PRODUCTION_TOOLS);
 BASE_TOOLS.push(...activeMeetingTools());
 
 if (PREVIEW_CONFIGURED) {
@@ -285,6 +286,7 @@ export async function callControlTool(name, args = {}, options = {}) {
   }
 
   if (name.startsWith('core.workstream.')) return callWorkstreamTool(name, args, options);
+  if (name.startsWith('core.production.')) return callProductionTool(name, args, options);
 
   // The dispatch front end routes into the tools above (never into
   // itself): it receives callControlTool so the gate it applies is the

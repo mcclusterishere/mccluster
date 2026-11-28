@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-11-24.1",
+  "catalogVersion": "2026-11-28.1",
   "capabilities": [
     {
       "id": "core.resume",
@@ -2544,6 +2544,364 @@
         "self-hosted",
         "private"
       ]
+    },
+    {
+      "id": "production.project.get",
+      "title": "Read production project",
+      "description": "Read one production project the caller may see: shots, registered versioned assets with hashes, and actor consent state. Read-only. MCP only: authorization needs the actor only the MCP path carries.",
+      "domain": "production",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "project_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "production",
+        "project",
+        "read"
+      ]
+    },
+    {
+      "id": "production.asset.lookup",
+      "title": "Look up production assets",
+      "description": "List a production project's registered assets by kind (master, set, prop, audio, recording, export, character, script) and name query. Read-only.",
+      "domain": "production",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "project_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "production",
+        "assets",
+        "read"
+      ]
+    },
+    {
+      "id": "production.shot.validate",
+      "title": "Validate a shot",
+      "description": "Normalize a mccluster-shot-render/1 manifest and validate it against the project's assets, master version, actor consent, frames and required checks. Queues nothing.",
+      "domain": "production",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "manifest"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "manifest": {
+            "type": "object"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "production",
+        "shot",
+        "validate"
+      ]
+    },
+    {
+      "id": "production.render.submit",
+      "title": "Submit a shot render",
+      "description": "Queue one shot render (Unreal Movie Render Queue, or the Blender fallback) on an owned worker over the signed compute protocol. Idempotent on the manifest; a retake re-renders one shot only; bounded retries. Runs no command the caller supplies.",
+      "domain": "production",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "manifest": {
+            "type": "object"
+          },
+          "retake_of": {
+            "type": "string"
+          },
+          "changes": {
+            "type": "object"
+          },
+          "max_attempts": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "priority": {
+            "type": "integer"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "production",
+        "render",
+        "unreal",
+        "blender"
+      ]
+    },
+    {
+      "id": "production.job.get",
+      "title": "Read production job",
+      "description": "Status of one production job: worker, attempts, progress, engine and version, Unreal project and sequence, checks, playback probe, outputs and logs. Read-only.",
+      "domain": "production",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "job_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "job_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "production",
+        "job",
+        "read"
+      ]
+    },
+    {
+      "id": "production.job.cancel",
+      "title": "Cancel production job",
+      "description": "Cancel a queued production job atomically, or ask the worker holding it to stop at its next lease heartbeat. Deletes nothing.",
+      "domain": "production",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "job_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "job_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "production",
+        "job",
+        "cancel"
+      ]
+    },
+    {
+      "id": "production.artifact.get",
+      "title": "Read production artifacts",
+      "description": "Artifacts one production job produced (preview, frames, logs, export, Unreal project and sequence, checks) with node-local path, hash and holding worker. Read-only.",
+      "domain": "production",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "job_id": {
+            "type": "string"
+          },
+          "artifact_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "production",
+        "artifact",
+        "read"
+      ]
+    },
+    {
+      "id": "production.facetrack.submit",
+      "title": "Submit a face-track range",
+      "description": "Queue MediaPipe face tracking of one approved range of a consented recording on an owned worker. Refused without face_tracking consent.",
+      "domain": "production",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "manifest"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "manifest": {
+            "type": "object"
+          },
+          "max_attempts": {
+            "type": "integer"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "production",
+        "capture",
+        "mediapipe"
+      ]
+    },
+    {
+      "id": "production.transcript.submit",
+      "title": "Submit a transcript",
+      "description": "Queue a Faster Whisper transcript of one registered project media file on an owned worker. Recordings need the actor's consent.",
+      "domain": "production",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "manifest"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "manifest": {
+            "type": "object"
+          },
+          "max_attempts": {
+            "type": "integer"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "production",
+        "transcript",
+        "whisper"
+      ]
     }
   ],
   "bindings": [
@@ -3426,6 +3784,163 @@
         "read_only": true,
         "self_hosted": true,
         "release_data": true
+      }
+    },
+    {
+      "id": "core.production-project-get",
+      "capability": "production.project.get",
+      "provider": "mccluster-core",
+      "tool": "core.production.project.get",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "core.production-asset-lookup",
+      "capability": "production.asset.lookup",
+      "provider": "mccluster-core",
+      "tool": "core.production.asset.lookup",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "core.production-shot-validate",
+      "capability": "production.shot.validate",
+      "provider": "mccluster-core",
+      "tool": "core.production.shot.validate",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "core.production-render-submit",
+      "capability": "production.render.submit",
+      "provider": "mccluster-core",
+      "tool": "core.production.render.submit",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "idempotent": true,
+        "owned_workers": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "core.production-job-get",
+      "capability": "production.job.get",
+      "provider": "mccluster-core",
+      "tool": "core.production.job.get",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "core.production-job-cancel",
+      "capability": "production.job.cancel",
+      "provider": "mccluster-core",
+      "tool": "core.production.job.cancel",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "idempotent": true,
+        "owned_workers": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "core.production-artifact-get",
+      "capability": "production.artifact.get",
+      "provider": "mccluster-core",
+      "tool": "core.production.artifact.get",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "core.production-facetrack-submit",
+      "capability": "production.facetrack.submit",
+      "provider": "mccluster-core",
+      "tool": "core.production.facetrack.submit",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "idempotent": true,
+        "owned_workers": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "core.production-transcript-submit",
+      "capability": "production.transcript.submit",
+      "provider": "mccluster-core",
+      "tool": "core.production.transcript.submit",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "idempotent": true,
+        "owned_workers": true,
+        "self_hosted": true
       }
     }
   ]

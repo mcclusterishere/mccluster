@@ -1,0 +1,24 @@
+{
+  "_comment": "Example for Prime. Copy to %LOCALAPPDATA%\\McCluster\\production-executor.json (outside git) and set MCCLUSTER_PRODUCTION_CONFIG to it. Paths marked <...> must be filled in on the machine.",
+  "node_label": "prime",
+  "projects": {
+    "get-it-back": "C:\\Users\\<you>\\AppData\\Local\\McCluster\\Productions\\get-it-back"
+  },
+  "capabilities": [
+    "production.render.unreal",
+    "production.render.blender"
+  ],
+  "tools": {
+    "blender": "C:\\Program Files\\Blender Foundation\\Blender 5.3\\blender.exe",
+    "unreal_root": "C:\\Program Files\\Epic Games\\UE_5.8",
+    "ffmpeg": "<path to ffmpeg.exe>",
+    "ffprobe": "<path to ffprobe.exe>"
+  },
+  "unreal_project_name": "McCPreviz",
+  "timeouts": {
+    "export": 900000,
+    "build": 1800000,
+    "render": 3600000,
+    "encode": 600000
+  }
+}
