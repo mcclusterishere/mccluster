@@ -452,6 +452,7 @@ export const SITE_TABLE = deepFreeze({
       "/sites.html",
       "/sponsor.html",
       "/studio.html",
+      "/table-read.html",
       "/topics.html",
       "/tracks/antisocial.html",
       "/tracks/here.html",

@@ -1,0 +1,43 @@
+{
+  "schema": "mccluster-cut/1",
+  "name": "Get It Back 60s",
+  "fps": 30,
+  "resolution": [720, 1280],
+  "_read_me": "Fill every FILL_FROM_TIMELINE from %LOCALAPPDATA%\\McCluster\\Productions\\get-it-back\\timeline.json and the scenes in blend\\get-it-back_full.blend. conform_cut.py refuses a scene name it cannot find. Frames are at 30 fps: 'frames' 240 = 8 s. Past violence stays offscreen: aftermath and reactions only. Sick Filet is fictional.",
+  "song": {
+    "path": "C:/Users/Mattm/Downloads/Get It Back.m4a",
+    "source_in_s": 0,
+    "until_s": 42,
+    "fade_out_s": 2.5,
+    "duck_db": -10,
+    "_note": "Pick source_in_s so the hook (with the confirmed lines: send it stat / definitely getting hacked for that / My pole a ghost) lands inside 0:00-0:40. Use the reviewed lyric timings."
+  },
+  "shots": [
+    { "id": "suite-vibe", "scene": "FILL_FROM_TIMELINE", "camera": "FILL_FROM_TIMELINE", "frame_in": 1, "frames": 240,
+      "note": "0:00-0:08 Matthew in his Executive Suite, smiling, vibing to the song." },
+    { "id": "rv", "scene": "FILL_FROM_TIMELINE", "camera": "FILL_FROM_TIMELINE", "frame_in": 1, "frames": 180,
+      "note": "0:08-0:14 The RV." },
+    { "id": "sick-filet", "scene": "FILL_FROM_TIMELINE", "camera": "FILL_FROM_TIMELINE", "frame_in": 1, "frames": 180,
+      "note": "0:14-0:20 The fictional Sick Filet." },
+    { "id": "consequences", "scene": "FILL_FROM_TIMELINE", "camera": "FILL_FROM_TIMELINE", "frame_in": 1, "frames": 240,
+      "note": "0:20-0:28 Consequences after Dave acted on his own. Aftermath only; nothing violent on screen." },
+    { "id": "behind-glass", "scene": "FILL_FROM_TIMELINE", "camera": "FILL_FROM_TIMELINE", "frame_in": 1, "frames": 150,
+      "note": "0:28-0:33 Dave behind glass." },
+    { "id": "wrong-acura", "scene": "FILL_FROM_TIMELINE", "camera": "FILL_FROM_TIMELINE", "frame_in": 1, "frames": 210,
+      "note": "0:33-0:40 The wrong Acura in Waterbury." },
+    { "id": "suite-phone-rings", "scene": "FILL_FROM_TIMELINE", "camera": "FILL_FROM_TIMELINE", "frame_in": 1, "frames": 120,
+      "note": "0:40-0:44 Present day. Matthew's phone in the suite: Dave calling from rehab. Proof scene: blend\\proof_phone_call.blend (Floor 6 Core v2, Halo); append its scene into the full file first." },
+    { "id": "dave-whole-new-man", "scene": "FILL_FROM_TIMELINE", "camera": "FILL_FROM_TIMELINE", "frame_in": 1, "frames": 150,
+      "note": "0:44-0:49 Dave: \"I'm a whole new man, man.\"" },
+    { "id": "matthew-amused", "scene": "FILL_FROM_TIMELINE", "camera": "FILL_FROM_TIMELINE", "frame_in": 1, "frames": 150,
+      "note": "0:49-0:54 Matthew: amused nostalgia." },
+    { "id": "matthew-how-you-doing", "scene": "FILL_FROM_TIMELINE", "camera": "FILL_FROM_TIMELINE", "frame_in": 1, "frames": 180,
+      "note": "0:54-1:00 Matthew turns to genuine interest in how Dave is doing; Dave answers." }
+  ],
+  "dialogue": [
+    { "id": "dave-whole-new-man", "speaker": "DAVE", "path": "audio/SCRATCH_dave-whole-new-man.wav", "at_s": 44.3, "scratch": true },
+    { "id": "matthew-amused", "speaker": "MATTHEW", "path": "audio/SCRATCH_matthew-amused.wav", "at_s": 49.2, "scratch": true },
+    { "id": "matthew-how-you-doing", "speaker": "MATTHEW", "path": "audio/SCRATCH_matthew-how-you-doing.wav", "at_s": 54.2, "scratch": true },
+    { "id": "dave-answer", "speaker": "DAVE", "path": "audio/SCRATCH_dave-answer.wav", "at_s": 57.0, "scratch": true }
+  ]
+}

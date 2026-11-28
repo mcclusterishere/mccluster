@@ -26,11 +26,13 @@ import { handleIdentity } from './identity/router.js';
 import { handleActionArchive } from './action-archive.js';
 import { handleTravelRouting } from './travel-routing.js';
 import { handleAudioRooms } from './audio-sfu-rooms.js';
+import { handleTableRead } from './table-read/routes.js';
 import { handleRegionScope } from './world-region-feed.js';
 import { handleMemberFronts } from './member-fronts.js';
 import { coreSignedGate } from './world-core-reads.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
+export { TableReadRoom } from './table-read/durable.js';
 
 function healthResponse(request, env) {
   return reply(request, env, {
@@ -128,6 +130,9 @@ export default {
       // Audio rooms own their member gate and are explicitly disabled by default.
       const audio = await handleAudioRooms(request, env);
       if (audio) return audio;
+      // Table Read rooms: signed-in host, signed seat passes, disabled by default (docs/creator/TABLE-READ.md).
+      const tableRead = await handleTableRead(request, env);
+      if (tableRead) return tableRead;
       const response = await handlePlatformApi(request, env);
       if (response) return response;
     } catch (error) {
