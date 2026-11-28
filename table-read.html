@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head><script src="js/shell-boot.js?v=__STAMP__"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Table Read · McCluster Creator</title>
+  <link rel="canonical" href="https://matthew.mccluster.org/table-read.html">
+  <meta name="robots" content="noindex">
+  <meta name="description" content="A private table read: everyone reads the same cue from their phone, with small live faces beside the script.">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/table-read.css?v=__STAMP__">
+</head>
+<body>
+  <main class="tr">
+    <p id="trNotice" class="tr-notice" role="status" aria-live="polite"></p>
+
+    <section id="trLobby" class="tr-panel" hidden>
+      <h1>Table Read</h1>
+      <p>Start a private room, load the scene and send each actor their own link. They read from their phone browser. Nothing to install.</p>
+      <form id="trStart">
+        <label>Scene title<input id="trTitle" maxlength="120" value="Get It Back: the call from rehab"></label>
+        <label>Script <small>(one line each as <code>NAME: line</code>, <code>(direction)</code>, <code>[CUE label]</code>)</small>
+          <textarea id="trScript" rows="10" spellcheck="false"></textarea></label>
+        <label class="tr-file">Or load a script file<input id="trLoadFile" type="file" accept=".txt,.md,.fountain,text/plain"></label>
+        <label class="tr-check"><input id="trHostOnCam" type="checkbox"> I'm on camera too</label>
+        <label class="tr-check"><input id="trHostRecords" type="checkbox"> Record my own camera and mic on this device when a take rolls</label>
+        <button type="submit">Start private room</button>
+      </form>
+    </section>
+
+    <section id="trJoin" class="tr-panel" hidden>
+      <h1>Table Read</h1>
+      <p>You are reading <b id="trJoinRole">your role</b>. Headphones help keep the others out of your microphone.</p>
+      <form id="trJoinForm">
+        <label>Your name<input id="trName" maxlength="60" autocomplete="name" required></label>
+        <button type="submit">Turn on camera and mic and join</button>
+      </form>
+      <p class="tr-small">Your browser will ask for your camera and microphone. Joining does not record you; you will be asked separately before any take.</p>
+    </section>
+
+    <section id="trRoom" class="tr-room" hidden>
+      <header class="tr-bar">
+        <span id="trStatus">Connecting…</span>
+        <span id="trPos"></span>
+        <span id="trRec" class="tr-rec" hidden>REC <span data-bytes></span></span>
+      </header>
+
+      <div class="tr-script">
+        <div id="trTiles" class="tr-tiles" aria-label="Live faces. Drag to move.">
+          <figure id="trSelf" class="tr-tile tr-self"><video playsinline autoplay muted></video><figcaption>You</figcaption></figure>
+        </div>
+        <div class="tr-text" aria-live="polite">
+          <p id="trPrev" class="tr-prev"></p>
+          <p id="trSpeaker" class="tr-speaker"></p>
+          <p id="trYours" class="tr-yours" hidden>Your line</p>
+          <p id="trLine" class="tr-line"></p>
+          <ol id="trNext" class="tr-next"></ol>
+          <div id="trMarkers" class="tr-markers"></div>
+        </div>
+      </div>
+
+      <div class="tr-dock">
+        <nav id="trHost" class="tr-controls" aria-label="Host controls" hidden>
+          <div class="tr-row">
+            <button type="button" id="trBack" aria-label="Back one line">Back</button>
+            <button type="button" id="trPause">Resume</button>
+            <button type="button" id="trNextBtn" class="tr-primary" aria-label="Next line">Next</button>
+          </div>
+          <div class="tr-row">
+            <button type="button" id="trMark">Cue marker</button>
+            <label class="tr-rate">Scroll<select id="trRate"><option value="">Off</option><option value="110">Slow</option><option value="150">Medium</option><option value="190">Fast</option></select></label>
+            <button type="button" id="trSync">Sync cue</button>
+          </div>
+          <div class="tr-row">
+            <button type="button" id="trAsk">Ask consent</button>
+            <button type="button" id="trTake" class="tr-danger">Record take</button>
+            <button type="button" id="trExportSession">Export session</button>
+          </div>
+          <p id="trHolds" class="tr-small"></p>
+          <p id="trRecv" class="tr-small"></p>
+          <details open><summary>Actor links</summary><ul id="trInvites" class="tr-invites"></ul></details>
+          <details><summary>Seats</summary><ul id="trSeats" class="tr-seats"></ul></details>
+          <details><summary>Import take files</summary>
+            <label class="tr-file">Takes and their .take.json files<input id="trImport" type="file" multiple accept=".webm,.mp4,.json"></label>
+            <p id="trImportOut" class="tr-small"></p>
+          </details>
+        </nav>
+
+        <nav id="trActor" class="tr-controls" aria-label="Actor controls" hidden>
+          <div class="tr-row">
+            <button type="button" id="trHold" aria-pressed="false">Hold beat</button>
+            <button type="button" id="trRevoke" class="tr-quiet" hidden>Stop recording me</button>
+          </div>
+        </nav>
+        <div class="tr-row tr-row-2">
+          <button type="button" id="trHideSelf" aria-pressed="false">Hide me</button>
+          <button type="button" id="trFaces">Move faces</button>
+        </div>
+        <details class="tr-takes-panel"><summary>Takes on this device</summary>
+          <ul id="trTakes" class="tr-takes"></ul>
+        </details>
+      </div>
+    </section>
+
+    <dialog id="trConsent" class="tr-consent" aria-labelledby="trConsentTitle">
+      <h2 id="trConsentTitle">Record your take?</h2>
+      <p>The host asks to record your camera and microphone for <b data-scene></b>. It is recorded on this phone only, while a take is rolling. It leaves this phone only if you export it or tap Send to host. You can stop at any time.</p>
+      <div class="tr-row">
+        <button type="button" id="trConsentYes" class="tr-primary">Allow recording</button>
+        <button type="button" id="trConsentNo">Not now</button>
+      </div>
+    </dialog>
+    <div id="trFlash" class="tr-flash" hidden></div>
+  </main>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script type="module" src="js/table-read/app.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__" defer></script>
+</body>
+</html>

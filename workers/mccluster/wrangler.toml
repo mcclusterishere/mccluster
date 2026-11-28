@@ -47,6 +47,11 @@ AUDIO_SFU_ROOMS_ENABLED = "false"
 # Needs AUDIO_SFU_ROOMS_ENABLED and the Worker secret AUDIO_ROOM_PASS_KEY (32+ random characters),
 # which signs the visitor's listening pass. Other regions, hands and speaking always need sign-in.
 AUDIO_ROOMS_VISITOR_LISTEN_ENABLED = "false"
+# Table Read rooms (src/table-read/, docs/creator/TABLE-READ.md): a private script-first room with
+# peer-to-peer camera/mic and device-local recording. Do not enable until the Worker secret
+# TABLE_READ_PASS_KEY (32+ random characters) is set, a TURN relay is chosen for cellular NATs and
+# the two-phone test in that doc has passed on a review deploy.
+TABLE_READ_ENABLED = "false"
 # Country-scoped public regional feeds and explicit author-assigned post countries.
 # Production SQL applied: supabase/migrations/20261021173729_world_place_scope_v1.sql (version 20261021173729 is in
 # production's schema_migrations, read 2026-11-17). Do not turn on until public-only feed QA passes.
@@ -149,5 +154,14 @@ name = "HereTenantAgent"
 class_name = "HereTenantAgent"
 
 [exports.HereTenantAgent]
+type = "durable-object"
+storage = "sqlite"
+
+# Table Read room state (scene, cue, seats, consent). No media. Reached only through src/table-read/routes.js.
+[[durable_objects.bindings]]
+name = "TABLE_READ_ROOM"
+class_name = "TableReadRoom"
+
+[exports.TableReadRoom]
 type = "durable-object"
 storage = "sqlite"
